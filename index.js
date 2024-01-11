@@ -1,11 +1,12 @@
 const { IncomingForm } = require("formidable")
 const { createServer } = require("http")
 const { HtmlPage, GetHtmlPage } = require("./page/HtmlPage.js")
-const { log } = require("console")
-const { copyFile, rm } = require("fs")
+const { log, warn } = require("console")
+const { copyFile, rm, existsSync, mkdir } = require("fs")
 
 createServer((req, res) => {
     if (req.method === "POST") {
+        
         // Create a new form data object 
         const userData = new IncomingForm()
 
@@ -20,12 +21,30 @@ createServer((req, res) => {
             log(files.file[0].filepath)
             log(files.file[0].originalFilename)
 
+
+            // Check if the uploads folder exists
+            if (!existsSync("./uploads")) {
+                log("Uploads folder does not exist")
+
+                mkdir("./uploads", (err) => {
+                    if (err) {
+                        log(err)
+                        res.end(HtmlPage("Error"))
+                    } else {
+                        log("Uploads folder created successfully")
+                    }
+                })
+
+            }
+
+
+
             // Copy the file from the temp folder to the uploads folder
             copyFile(files.file[0].filepath, `./uploads/${files.file[0].originalFilename}`, (err) => {
                 if (err) {
                     log(err)
                     res.end(HtmlPage("Error"))
-                }else{
+                } else {
                     log("File copied successfully")
                 }
             })
@@ -35,7 +54,7 @@ createServer((req, res) => {
                 if (err) {
                     log(err)
                     res.end(HtmlPage("Error"))
-                }else{
+                } else {
                     log("Temp File deleted successfully")
                 }
             })
